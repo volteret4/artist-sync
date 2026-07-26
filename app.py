@@ -37,8 +37,10 @@ VARS_SPEC = [
      "help": "Versión de API Subsonic a declarar (ej. 1.15.0) — súbela solo si tu Airsonic la soporta; "
              "una versión mas nueva que la suya da 'Incompatible Airsonic REST protocol version' "
              "(aunque esto ya se autodetecta solo en el siguiente sync)"},
-    {"name": "LASTFM_API_KEY", "secret": True, "live": True, "help": "API key de Last.fm"},
-    {"name": "LASTFM_USERNAME", "secret": False, "live": True, "help": "Usuario de Last.fm a comparar"},
+    {"name": "LASTFM_API_KEY", "secret": True, "live": True,
+     "help": "API key de Last.fm — solo hace falta si NO hay espejo compartido (lastfm_data) montado"},
+    {"name": "LASTFM_USERNAME", "secret": False, "live": True,
+     "help": "Usuario de Last.fm — solo hace falta si NO hay espejo compartido (lastfm_data) montado"},
     {"name": "LASTFM_MIN_PLAYCOUNT", "secret": False, "live": True,
      "help": "Umbral minimo de scrobbles al escanear (el filtro fino se ajusta luego en la web)"},
     {"name": "QB_HOST", "secret": False, "live": True, "help": "Host/IP de qBittorrent"},

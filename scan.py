@@ -11,12 +11,12 @@ import argparse
 import sqlite3
 import sys
 
-from clients import airsonic_client, flac_scan, lastfm_client, muspy_client, qbittorrent_client
+from clients import airsonic_client, flac_scan, lastfm_client, lastfm_mirror_client, muspy_client, qbittorrent_client
 from clients.normalize import normalize
 from config import (
     AIRSONIC_API_VERSION, AIRSONIC_PASSWORD, AIRSONIC_URL, AIRSONIC_USER,
     DB_PATH,
-    LASTFM_API_KEY, LASTFM_MIN_PLAYCOUNT, LASTFM_USERNAME,
+    LASTFM_API_KEY, LASTFM_MIN_PLAYCOUNT, LASTFM_SCROBBLES_DB, LASTFM_USERNAME,
     MUSPY_PASSWORD, MUSPY_USERNAME,
     QB_CATEGORY, QB_HOST, QB_LOCAL_PATH, QB_PASS, QB_PORT, QB_REMOTE_PATH, QB_USER,
 )
@@ -100,11 +100,19 @@ def sync_airsonic(conn):
 
 
 def sync_lastfm(conn, min_playcount=None):
-    if not (LASTFM_API_KEY and LASTFM_USERNAME):
-        print("  [lastfm] sin credenciales, omitido")
-        return
     if min_playcount is None:
         min_playcount = LASTFM_MIN_PLAYCOUNT
+
+    if lastfm_mirror_client.available(LASTFM_SCROBBLES_DB):
+        print(f"  [lastfm] usando espejo compartido ({LASTFM_SCROBBLES_DB}, Last.fm+ListenBrainz)")
+        artists = lastfm_mirror_client.top_artists(LASTFM_SCROBBLES_DB, min_playcount=min_playcount)
+        rows = [{"name": a["name"], "playcount": a["playcount"]} for a in artists]
+        replace_source(conn, "lastfm", rows)
+        return
+
+    if not (LASTFM_API_KEY and LASTFM_USERNAME):
+        print("  [lastfm] sin espejo compartido ni credenciales de API, omitido")
+        return
     artists = lastfm_client.top_artists(LASTFM_API_KEY, LASTFM_USERNAME, min_playcount=min_playcount)
     rows = [{"name": a["name"], "mbid": a.get("mbid"), "playcount": a["playcount"]} for a in artists]
     replace_source(conn, "lastfm", rows)

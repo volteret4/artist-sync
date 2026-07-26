@@ -33,12 +33,18 @@ AIRSONIC_USER         = os.environ.get("AIRSONIC_USER", "admin")
 AIRSONIC_PASSWORD     = os.environ.get("AIRSONIC_PASSWORD", "")
 AIRSONIC_API_VERSION  = os.environ.get("AIRSONIC_API_VERSION", "1.15.0")
 
-# Last.fm
+# Last.fm — si el espejo compartido de tumtumpa esta disponible (servicio
+# lastfm-scrobbles, volumen lastfm_data montado en /data), scan.py lo usa en
+# vez de llamar a la API: mas rapido, sin limite de paginacion, e incluye
+# escuchas de ListenBrainz que la API de Last.fm no ve. LASTFM_API_KEY/
+# LASTFM_USERNAME quedan como fallback para cuando no hay espejo (ej. esta
+# app corriendo suelta, fuera de tumtumpa).
+LASTFM_SCROBBLES_DB = os.environ.get("LASTFM_SCROBBLES_DB", "/data/lastfm_stats.db")
 LASTFM_API_KEY  = os.environ.get("LASTFM_API_KEY", "")
 LASTFM_USERNAME = os.environ.get("LASTFM_USERNAME", "")
 # Umbral minimo de scrobbles para traer un artista al escanear (evita paginar
-# miles de artistas de una sola escucha); el filtro fino y ajustable en vivo
-# se hace luego en la propia web.
+# miles de artistas de una sola escucha si se usa la API directa); el filtro
+# fino y ajustable en vivo se hace luego en la propia web.
 LASTFM_MIN_PLAYCOUNT = int(os.environ.get("LASTFM_MIN_PLAYCOUNT", "5"))
 
 # qBittorrent WebUI — mismo QB_HOST/QB_PORT/QB_USER/QB_PASS que dieta_sonora,

@@ -12,7 +12,7 @@ who to follow/unfollow there after seeing the other 3.
 ## File Structure
 
 - **`config.py`** — all credentials/paths, env-var overrideable, loads `.encrypted.env` via `sops_env.py`
-- **`clients/`** — one module per external API (`muspy_client`, `airsonic_client`, `lastfm_client`, `qbittorrent_client`, `musicbrainz_client`), plus `flac_scan.py` (mutagen tag reading) and `normalize.py` (cross-source artist-name matching key)
+- **`clients/`** — one module per external API (`muspy_client`, `airsonic_client`, `lastfm_client`, `lastfm_mirror_client`, `qbittorrent_client`, `musicbrainz_client`), plus `flac_scan.py` (mutagen tag reading) and `normalize.py` (cross-source artist-name matching key)
 - **`scan.py`** — orchestrates all 4 clients, upserts into `artist_sync.db`
 - **`app.py`** — Flask: serves the page + REST API + settings panel (`⚙`, shared pattern with `trasvase`/`dieta_sonora`)
 - **`templates/index.html`** — single-page comparator table (vanilla JS, no build step)
@@ -50,6 +50,16 @@ tracks (qbittorrent), `playcount` is lastfm-only.
   env var) keeps the sync fast by not paginating through thousands of
   one-play artists; the web UI's slider then filters further, live, from
   what's already in the DB — no re-scan needed to tighten the threshold.
+- **Last.fm source prefers a shared mirror over the API**: `scan.py`'s
+  `sync_lastfm` checks `lastfm_mirror_client.available(LASTFM_SCROBBLES_DB)`
+  first — if tumtumpa's `lastfm-scrobbles` service has populated the
+  `lastfm_data` volume (`/data/lastfm_stats.db`, Last.fm + ListenBrainz
+  already deduplicated by that service, see its
+  `services/dieta_sonora/estadisticas/lastfm/extraer_scrobbles.py`), it reads
+  straight from that SQLite file instead of calling `lastfm_client`/the
+  Last.fm API. `LASTFM_API_KEY`/`LASTFM_USERNAME` are only a fallback for
+  running this app outside tumtumpa. The mirror is strictly better data too:
+  it includes ListenBrainz-only listens the Last.fm API alone would miss.
 
 ## Related / sibling projects (same author, same conventions)
 

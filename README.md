@@ -27,10 +27,15 @@ AIRSONIC_PASSWORD=...
 AIRSONIC_API_VERSION=1.15.0   # baja el numero si tu Airsonic es viejo y da
                                # "Incompatible Airsonic REST protocol version"
 
-# Last.fm
+# Last.fm — si esta app corre dentro de tumtumpa y el volumen lastfm_data
+# esta montado en /data (servicio lastfm-scrobbles, ya sincroniza Last.fm +
+# ListenBrainz deduplicados a diario), scan.py lo usa directamente y estas
+# dos variables no hacen falta. Son solo el fallback para correr esta app
+# suelta, fuera de tumtumpa.
 LASTFM_API_KEY=...
 LASTFM_USERNAME=...
 LASTFM_MIN_PLAYCOUNT=5   # umbral al escanear; el filtro fino se ajusta en la web
+LASTFM_SCROBBLES_DB=/data/lastfm_stats.db   # ruta del espejo compartido, si existe
 
 # qBittorrent WebUI
 # "localhost" solo vale si esta app corre FUERA de Docker en el mismo host
@@ -90,3 +95,9 @@ También puede lanzarse la sincronización desde la propia web (botón
 - El umbral de scrobbles de Last.fm es ajustable en vivo en la web (slider)
   sin necesidad de re-escanear — se trae todo por encima de
   `LASTFM_MIN_PLAYCOUNT` y se filtra en el cliente.
+- **Last.fm/ListenBrainz**: si `LASTFM_SCROBBLES_DB` existe (montado desde el
+  volumen `lastfm_data` de tumtumpa), `clients/lastfm_mirror_client.py` lee
+  directamente esa base de datos compartida en vez de llamar a la API de
+  Last.fm — más rápido, sin límite de paginación, e incluye escuchas que solo
+  vengan de ListenBrainz (el espejo ya las deduplica entre sí). Si no existe,
+  cae al cliente de API de siempre (`LASTFM_API_KEY`/`LASTFM_USERNAME`).
