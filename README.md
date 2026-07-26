@@ -31,15 +31,19 @@ LASTFM_USERNAME=...
 LASTFM_MIN_PLAYCOUNT=5   # umbral al escanear; el filtro fino se ajusta en la web
 
 # qBittorrent WebUI
-QB_HOST=http://localhost:8080
+QB_HOST=localhost
+QB_PORT=8080
 QB_USER=admin
 QB_PASS=...
 QB_CATEGORY=             # opcional, vacío = todos los torrents
-QB_MUSIC_PATH=/mnt/music/qbittorrent   # solo informativo; los tags FLAC se leen
-                                        # por la ruta que reporta la propia API
+# No hay QB_MUSIC_PATH aquí: los tags FLAC se leen por la ruta que reporta la
+# propia API de qBittorrent. En Docker (tumtumpa) eso se resuelve montando
+# ARTIST_SYNC_QB_MUSIC_PATH 1:1 (mismo path dentro y fuera del contenedor) —
+# ver docker-compose.yml. En local basta con correr esta app en el mismo
+# host que qBittorrent.
 
 # MusicBrainz (para resolver MBIDs de artistas nuevos al seguir en Muspy)
-MB_CONTACT_EMAIL=tu@email.com
+MB_EMAIL=tu@email.com
 
 SETTINGS_PASSWORD=...     # protege el panel ⚙ de la web
 ```

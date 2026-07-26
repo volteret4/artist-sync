@@ -11,7 +11,7 @@ from flask import Flask, jsonify, render_template, request
 
 from clients import muspy_client
 from clients.musicbrainz_client import search_mbid
-from config import DB_PATH, MB_CONTACT_EMAIL, MUSPY_PASSWORD, MUSPY_USERNAME
+from config import DB_PATH, MB_EMAIL, MUSPY_PASSWORD, MUSPY_USERNAME
 from scan import init_db
 
 app = Flask(__name__)
@@ -30,14 +30,17 @@ VARS_SPEC = [
     {"name": "LASTFM_USERNAME", "secret": False, "help": "Usuario de Last.fm a comparar"},
     {"name": "LASTFM_MIN_PLAYCOUNT", "secret": False,
      "help": "Umbral minimo de scrobbles al escanear (el filtro fino se ajusta luego en la web)"},
-    {"name": "QB_HOST", "secret": False, "help": "URL WebUI de qBittorrent, ej. http://localhost:8080"},
+    {"name": "QB_HOST", "secret": False, "help": "Host/IP de qBittorrent"},
+    {"name": "QB_PORT", "secret": False, "default": "8080", "help": "Puerto WebUI de qBittorrent"},
     {"name": "QB_USER", "secret": False, "help": "Usuario WebUI de qBittorrent"},
     {"name": "QB_PASS", "secret": True, "help": "Contraseña WebUI de qBittorrent"},
     {"name": "QB_CATEGORY", "secret": False,
      "help": "Categoria de qBittorrent a escanear (vacio = todos los torrents)"},
-    {"name": "QB_MUSIC_PATH", "secret": False, "location": "root",
-     "help": "Ruta host donde qBittorrent guarda las descargas (bind mount — requiere recrear el contenedor)"},
-    {"name": "MB_CONTACT_EMAIL", "secret": False,
+    {"name": "ARTIST_SYNC_QB_MUSIC_PATH", "secret": False, "location": "root",
+     "help": "Ruta host donde qBittorrent guarda las descargas — se monta 1:1 (mismo path dentro "
+             "y fuera del contenedor) porque los tags FLAC se leen por la ruta que reporta la propia "
+             "API de qBittorrent (bind mount — requiere recrear el contenedor)"},
+    {"name": "MB_EMAIL", "secret": False,
      "help": "Email de contacto para la API de MusicBrainz (lo piden en el User-Agent)"},
 ]
 _HAS_SECRETS = any(v.get("secret") for v in VARS_SPEC)
@@ -265,7 +268,7 @@ def api_muspy_follow():
 
     try:
         if not mbid:
-            mbid = search_mbid(artist["name"], MB_CONTACT_EMAIL)
+            mbid = search_mbid(artist["name"], MB_EMAIL)
         if not mbid:
             conn.close()
             return jsonify({"error": f"No se encontro MBID para '{artist['name']}' en MusicBrainz"}), 404

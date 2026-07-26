@@ -29,18 +29,25 @@ LASTFM_USERNAME = os.environ.get("LASTFM_USERNAME", "")
 # se hace luego en la propia web.
 LASTFM_MIN_PLAYCOUNT = int(os.environ.get("LASTFM_MIN_PLAYCOUNT", "5"))
 
-# qBittorrent WebUI
-QB_HOST = os.environ.get("QB_HOST", "http://localhost:8080")
+# qBittorrent WebUI — mismo QB_HOST/QB_PORT/QB_USER/QB_PASS que dieta_sonora,
+# para que tumtumpa/scripts/up.sh reutilice las credenciales ya introducidas
+# ahi en vez de volver a preguntarlas.
+QB_HOST = os.environ.get("QB_HOST", "localhost")
+QB_PORT = os.environ.get("QB_PORT", "8080")
 QB_USER = os.environ.get("QB_USER", "admin")
 QB_PASS = os.environ.get("QB_PASS", "")
 # Categoria opcional de qBittorrent para limitar el escaneo (vacio = todos los torrents)
 QB_CATEGORY = os.environ.get("QB_CATEGORY", "")
-# Ruta FIJA dentro del contenedor donde qBittorrent guarda las descargas -- la
-# ruta real del host se elige con QB_MUSIC_PATH en el .env raiz de tumtumpa
-# (ver docker-compose.yml), igual que TRASVASE_COLLECTION_*_PATH en trasvase.
-QB_MUSIC_PATH = os.environ.get("QB_MUSIC_PATH", "/mnt/music/qbittorrent")
+# No hay una variable QB_MUSIC_PATH aqui a proposito: flac_scan.py usa tal
+# cual las rutas que devuelve la propia API de qBittorrent (content_path /
+# save_path+name), no una ruta fija propia. En Docker, eso exige montar el
+# mismo path absoluto que ve qBittorrent dentro de este contenedor -- lo
+# gestiona ARTIST_SYNC_QB_MUSIC_PATH en el .env raiz de tumtumpa (ver
+# docker-compose.yml), montado 1:1 (sin remapear), no como
+# TRASVASE_COLLECTION_*_PATH -> COLLECTION_*_PATH en trasvase.
 
-# MusicBrainz (para resolver MBIDs al seguir un artista nuevo en Muspy)
-MB_CONTACT_EMAIL = os.environ.get("MB_CONTACT_EMAIL", "admin@localhost")
+# MusicBrainz (para resolver MBIDs al seguir un artista nuevo en Muspy) —
+# mismo nombre MB_EMAIL que dieta_sonora_stats, para reutilizar el valor.
+MB_EMAIL = os.environ.get("MB_EMAIL", "admin@localhost")
 
 SETTINGS_PASSWORD = os.environ.get("SETTINGS_PASSWORD", "")
