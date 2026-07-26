@@ -1,4 +1,4 @@
-# repeat-one
+# artist-sync
 
 Comparador interactivo de artistas entre **Muspy** (seguidos), **Airsonic**
 (biblioteca local), **qBittorrent** (descargas, vía tags FLAC) y **Last.fm**
@@ -49,7 +49,7 @@ Cualquier fuente sin credenciales se omite en el escaneo sin dar error.
 ## Uso
 
 ```bash
-python scan.py            # sincroniza las 4 fuentes en repeat_one.db
+python scan.py            # sincroniza las 4 fuentes en artist_sync.db
 python scan.py --only muspy,lastfm   # solo algunas
 
 python app.py             # sirve la web en 0.0.0.0:5000
@@ -62,7 +62,7 @@ También puede lanzarse la sincronización desde la propia web (botón
 
 - **`scan.py`** llama a cada cliente en `clients/`, normaliza el nombre de
   cada artista (minúsculas, sin acentos/puntuación, sin "The " inicial) y
-  sincroniza la tabla `presence` de `repeat_one.db`: un artista puede tener
+  sincroniza la tabla `presence` de `artist_sync.db`: un artista puede tener
   una fila por fuente en la que aparece.
 - **qBittorrent** no tiene metadata de "artista" propia: se listan las rutas
   de contenido de cada torrent vía su API y se leen los tags `albumartist`/

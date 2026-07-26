@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Consulta las 4 fuentes (Muspy, Airsonic, qBittorrent+FLAC, Last.fm), normaliza
-nombres de artista y sincroniza la tabla `presence` de repeat_one.db.
+nombres de artista y sincroniza la tabla `presence` de artist_sync.db.
 
 Uso:
     python scan.py                    # sincroniza todo lo configurado

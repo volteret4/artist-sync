@@ -13,11 +13,11 @@ who to follow/unfollow there after seeing the other 3.
 
 - **`config.py`** — all credentials/paths, env-var overrideable, loads `.encrypted.env` via `sops_env.py`
 - **`clients/`** — one module per external API (`muspy_client`, `airsonic_client`, `lastfm_client`, `qbittorrent_client`, `musicbrainz_client`), plus `flac_scan.py` (mutagen tag reading) and `normalize.py` (cross-source artist-name matching key)
-- **`scan.py`** — orchestrates all 4 clients, upserts into `repeat_one.db`
+- **`scan.py`** — orchestrates all 4 clients, upserts into `artist_sync.db`
 - **`app.py`** — Flask: serves the page + REST API + settings panel (`⚙`, shared pattern with `trasvase`/`dieta_sonora`)
 - **`templates/index.html`** — single-page comparator table (vanilla JS, no build step)
 
-## Database Schema (`repeat_one.db`, SQLite)
+## Database Schema (`artist_sync.db`, SQLite)
 
 ```sql
 artists(id, name, norm_name UNIQUE)   -- norm_name = normalize(name), the cross-source join key
@@ -58,7 +58,8 @@ tracks (qbittorrent), `playcount` is lastfm-only.
   code was bootstrapped from it.
 - `../music-fuzzy/modules/submodules/muspy/muspy_manager.py` — the
   known-working Muspy API auth pattern this project's `muspy_client.py` follows.
-- `../tumtumpa` — the orchestration repo (git submodules + docker-compose +
-  reverse proxy) that runs all these sibling web apps in production. Not yet
-  wired in for repeat-one — see README/ask-the-user before adding a
-  `services/repeat-one` submodule + docker-compose profile there.
+- `../tumtumpa` — the orchestration repo (its actual GitHub remote is
+  `volteret4/repeat-one` — "tumtumpa" is just the local directory nickname,
+  don't confuse it with this project) that runs all these sibling web apps
+  in production via git submodules + docker-compose + reverse proxy. This
+  project is wired in as `services/artist-sync`.

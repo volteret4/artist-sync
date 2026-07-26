@@ -6,7 +6,7 @@ SEARCH_URL = "https://musicbrainz.org/ws/2/artist/"
 
 
 def search_mbid(artist_name, contact_email="admin@localhost"):
-    headers = {"User-Agent": f"RepeatOne/1.0 ({contact_email})"}
+    headers = {"User-Agent": f"ArtistSync/1.0 ({contact_email})"}
     params = {"query": f"artist:{artist_name}", "fmt": "json", "limit": 1}
     resp = requests.get(SEARCH_URL, params=params, headers=headers, timeout=10)
     resp.raise_for_status()

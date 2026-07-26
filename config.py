@@ -7,7 +7,7 @@ except FileNotFoundError:
     # En Docker las variables llegan ya descifradas vía docker-compose (scripts/up.sh)
     print("Aviso: no se encontró .encrypted.env; usando variables de entorno ya exportadas")
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repeat_one.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "artist_sync.db")
 
 FLASK_HOST = os.environ.get("FLASK_HOST", "0.0.0.0")
 FLASK_PORT = int(os.environ.get("FLASK_PORT", 5000))
