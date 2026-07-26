@@ -1,4 +1,5 @@
 import os
+from plain_env import read_env_file
 from sops_env import load_sops_env
 
 try:
@@ -6,6 +7,13 @@ try:
 except FileNotFoundError:
     # En Docker las variables llegan ya descifradas vía docker-compose (scripts/up.sh)
     print("Aviso: no se encontró .encrypted.env; usando variables de entorno ya exportadas")
+
+# Sobrescribe con el .env plano que escribe el panel ⚙ (app.py) -- Docker solo
+# inyecta env_file al CREAR el contenedor, así que sin esto un cambio guardado
+# en el panel se queda sin efecto hasta recrear el contenedor. scan.py se
+# relanza como subproceso nuevo en cada sync, así que esto basta para que
+# recoja cambios de configuración sin rebuild ni restart.
+os.environ.update(read_env_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")))
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "artist_sync.db")
 

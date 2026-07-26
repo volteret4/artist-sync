@@ -12,6 +12,7 @@ from flask import Flask, jsonify, render_template, request
 from clients import muspy_client
 from clients.musicbrainz_client import search_mbid
 from config import DB_PATH, MB_EMAIL, MUSPY_PASSWORD, MUSPY_USERNAME
+from plain_env import read_env_file, write_env_file
 from scan import init_db
 
 app = Flask(__name__)
@@ -20,24 +21,31 @@ app = Flask(__name__)
 SETTINGS_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 SETTINGS_ROOT_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "root.env")
 SETTINGS_PASSWORD = os.environ.get("SETTINGS_PASSWORD", "")
+# "live": True = solo lo usa scan.py, que se relanza como subproceso nuevo en
+# cada sync y relee config.py (que a su vez relee el .env plano, ver
+# plain_env.py) -- efecto inmediato con solo guardar + pulsar "Sincronizar",
+# sin tocar el contenedor. Sin ese flag (MUSPY_*, MB_EMAIL) el valor lo usa
+# tambien este mismo proceso Flask de larga duracion (para /api/muspy/*), que
+# lo fijo una vez al arrancar -- ahi si hace falta recrear el contenedor.
 VARS_SPEC = [
     {"name": "MUSPY_USERNAME", "secret": False, "help": "Usuario de Muspy"},
     {"name": "MUSPY_PASSWORD", "secret": True, "help": "Contraseña de Muspy"},
-    {"name": "AIRSONIC_URL", "secret": False, "help": "URL base de Airsonic"},
-    {"name": "AIRSONIC_USER", "secret": False, "help": "Usuario Airsonic"},
-    {"name": "AIRSONIC_PASSWORD", "secret": True, "help": "Contraseña Airsonic"},
-    {"name": "AIRSONIC_API_VERSION", "secret": False,
+    {"name": "AIRSONIC_URL", "secret": False, "live": True, "help": "URL base de Airsonic"},
+    {"name": "AIRSONIC_USER", "secret": False, "live": True, "help": "Usuario Airsonic"},
+    {"name": "AIRSONIC_PASSWORD", "secret": True, "live": True, "help": "Contraseña Airsonic"},
+    {"name": "AIRSONIC_API_VERSION", "secret": False, "live": True,
      "help": "Versión de API Subsonic a declarar (ej. 1.15.0) — súbela solo si tu Airsonic la soporta; "
-             "una versión mas nueva que la suya da 'Incompatible Airsonic REST protocol version'"},
-    {"name": "LASTFM_API_KEY", "secret": True, "help": "API key de Last.fm"},
-    {"name": "LASTFM_USERNAME", "secret": False, "help": "Usuario de Last.fm a comparar"},
-    {"name": "LASTFM_MIN_PLAYCOUNT", "secret": False,
+             "una versión mas nueva que la suya da 'Incompatible Airsonic REST protocol version' "
+             "(aunque esto ya se autodetecta solo en el siguiente sync)"},
+    {"name": "LASTFM_API_KEY", "secret": True, "live": True, "help": "API key de Last.fm"},
+    {"name": "LASTFM_USERNAME", "secret": False, "live": True, "help": "Usuario de Last.fm a comparar"},
+    {"name": "LASTFM_MIN_PLAYCOUNT", "secret": False, "live": True,
      "help": "Umbral minimo de scrobbles al escanear (el filtro fino se ajusta luego en la web)"},
-    {"name": "QB_HOST", "secret": False, "help": "Host/IP de qBittorrent"},
-    {"name": "QB_PORT", "secret": False, "default": "8080", "help": "Puerto WebUI de qBittorrent"},
-    {"name": "QB_USER", "secret": False, "help": "Usuario WebUI de qBittorrent"},
-    {"name": "QB_PASS", "secret": True, "help": "Contraseña WebUI de qBittorrent"},
-    {"name": "QB_CATEGORY", "secret": False,
+    {"name": "QB_HOST", "secret": False, "live": True, "help": "Host/IP de qBittorrent"},
+    {"name": "QB_PORT", "secret": False, "live": True, "default": "8080", "help": "Puerto WebUI de qBittorrent"},
+    {"name": "QB_USER", "secret": False, "live": True, "help": "Usuario WebUI de qBittorrent"},
+    {"name": "QB_PASS", "secret": True, "live": True, "help": "Contraseña WebUI de qBittorrent"},
+    {"name": "QB_CATEGORY", "secret": False, "live": True,
      "help": "Categoria de qBittorrent a escanear (vacio = todos los torrents)"},
     {"name": "ARTIST_SYNC_QB_MUSIC_PATH", "secret": False, "location": "root",
      "help": "Ruta host donde qBittorrent guarda las descargas — se monta 1:1 (mismo path dentro "
@@ -53,51 +61,9 @@ def _settings_path(spec):
     return SETTINGS_ROOT_ENV_PATH if spec.get("location") == "root" else SETTINGS_ENV_PATH
 
 
-def _read_env_file(path):
-    values = {}
-    if not os.path.exists(path):
-        return values
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            s = line.strip()
-            if not s or s.startswith("#") or "=" not in s:
-                continue
-            k, v = s.split("=", 1)
-            v = v.strip()
-            if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
-                v = v[1:-1]
-            values[k.strip()] = v
-    return values
-
-
-def _write_env_file(path, updates):
-    lines = []
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-    seen = set()
-    out = []
-    for line in lines:
-        s = line.strip()
-        if s and not s.startswith("#") and "=" in s:
-            k = s.split("=", 1)[0].strip()
-            if k in updates:
-                out.append(f"{k}={updates[k]}\n")
-                seen.add(k)
-                continue
-        out.append(line)
-    for k, v in updates.items():
-        if k not in seen:
-            if out and not out[-1].endswith("\n"):
-                out[-1] += "\n"
-            out.append(f"{k}={v}\n")
-    with open(path, "w", encoding="utf-8") as f:
-        f.writelines(out)
-
-
 def _current_value(spec):
     path = _settings_path(spec)
-    file_vals = _read_env_file(path)
+    file_vals = read_env_file(path)
     if spec["name"] in file_vals:
         return file_vals[spec["name"]]
     return os.environ.get(spec["name"], spec.get("default", ""))
@@ -141,12 +107,16 @@ def api_settings_save():
         path = _settings_path(by_name[k])
         by_path.setdefault(path, {})[k] = v
     for path, vals in by_path.items():
-        _write_env_file(path, vals)
+        write_env_file(path, vals)
     touched_root = any(_settings_path(by_name[k]) == SETTINGS_ROOT_ENV_PATH for k in updates)
-    message = "Guardado. Reinicia el contenedor para aplicar los cambios."
+    needs_restart = any(not by_name[k].get("live") for k in updates)
     if touched_root:
-        message = ("Guardado. QB_MUSIC_PATH es una ruta de bind mount — hace falta "
+        message = ("Guardado. ARTIST_SYNC_QB_MUSIC_PATH es una ruta de bind mount — hace falta "
                     "RECREAR el contenedor (docker compose up -d --build), no basta con reiniciarlo.")
+    elif needs_restart:
+        message = "Guardado. Reinicia el contenedor para aplicar los cambios."
+    else:
+        message = "Guardado. Ya tiene efecto en la próxima sincronización (botón \"Sincronizar\"), sin tocar el contenedor."
     return jsonify({"ok": True, "message": message})
 
 
