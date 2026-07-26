@@ -18,7 +18,7 @@ from config import (
     DB_PATH,
     LASTFM_API_KEY, LASTFM_MIN_PLAYCOUNT, LASTFM_USERNAME,
     MUSPY_PASSWORD, MUSPY_USERNAME,
-    QB_CATEGORY, QB_HOST, QB_PASS, QB_PORT, QB_USER,
+    QB_CATEGORY, QB_HOST, QB_LOCAL_PATH, QB_PASS, QB_PORT, QB_REMOTE_PATH, QB_USER,
 )
 
 SCHEMA = """
@@ -114,7 +114,9 @@ def sync_qbittorrent(conn):
     if not QB_PASS:
         print("  [qbittorrent] sin credenciales, omitido")
         return
-    paths = qbittorrent_client.list_content_paths(QB_HOST, QB_PORT, QB_USER, QB_PASS, QB_CATEGORY)
+    paths = qbittorrent_client.list_content_paths(
+        QB_HOST, QB_PORT, QB_USER, QB_PASS, QB_CATEGORY, QB_REMOTE_PATH, QB_LOCAL_PATH
+    )
     counts = flac_scan.scan_artist_track_counts(paths)
     rows = [{"name": name, "count": count} for name, count in counts.items()]
     replace_source(conn, "qbittorrent", rows)

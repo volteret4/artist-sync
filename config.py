@@ -50,13 +50,18 @@ QB_USER = os.environ.get("QB_USER", "admin")
 QB_PASS = os.environ.get("QB_PASS", "")
 # Categoria opcional de qBittorrent para limitar el escaneo (vacio = todos los torrents)
 QB_CATEGORY = os.environ.get("QB_CATEGORY", "")
-# No hay una variable QB_MUSIC_PATH aqui a proposito: flac_scan.py usa tal
-# cual las rutas que devuelve la propia API de qBittorrent (content_path /
-# save_path+name), no una ruta fija propia. En Docker, eso exige montar el
-# mismo path absoluto que ve qBittorrent dentro de este contenedor -- lo
-# gestiona ARTIST_SYNC_QB_MUSIC_PATH en el .env raiz de tumtumpa (ver
-# docker-compose.yml), montado 1:1 (sin remapear), no como
-# TRASVASE_COLLECTION_*_PATH -> COLLECTION_*_PATH en trasvase.
+# Ruta FIJA dentro del contenedor donde esta app tiene montada la carpeta de
+# descargas -- igual que COLLECTION_1_PATH en trasvase, la ruta real del host
+# se elige con ARTIST_SYNC_QB_MUSIC_PATH en el .env raiz de tumtumpa (ver
+# docker-compose.yml).
+QB_LOCAL_PATH = "/mnt/music/qbittorrent"
+# Si qBittorrent corre en SU PROPIO contenedor, las rutas que devuelve su API
+# (content_path/save_path) son las que VE ESE contenedor (p.ej. "/downloads"),
+# no las de este. QB_REMOTE_PATH es ese prefijo tal cual lo reporta la API de
+# qBittorrent; flac_scan.py lo reemplaza por QB_LOCAL_PATH antes de leer
+# nada. Vacio (por defecto) = no reescribe, asume que qBittorrent corre
+# directamente en este mismo host/filesystem (sin contenedor propio).
+QB_REMOTE_PATH = os.environ.get("QB_REMOTE_PATH", "")
 
 # MusicBrainz (para resolver MBIDs al seguir un artista nuevo en Muspy) —
 # mismo nombre MB_EMAIL que dieta_sonora_stats, para reutilizar el valor.

@@ -47,10 +47,13 @@ VARS_SPEC = [
     {"name": "QB_PASS", "secret": True, "live": True, "help": "Contraseña WebUI de qBittorrent"},
     {"name": "QB_CATEGORY", "secret": False, "live": True,
      "help": "Categoria de qBittorrent a escanear (vacio = todos los torrents)"},
+    {"name": "QB_REMOTE_PATH", "secret": False, "live": True,
+     "help": "Solo si qBittorrent corre en SU PROPIO contenedor: la ruta tal cual la reporta su API "
+             "(ej. /downloads). Se reescribe por la ruta local antes de leer los FLAC. Vacío si "
+             "qBittorrent corre directamente en este mismo host/filesystem"},
     {"name": "ARTIST_SYNC_QB_MUSIC_PATH", "secret": False, "location": "root",
-     "help": "Ruta host donde qBittorrent guarda las descargas — se monta 1:1 (mismo path dentro "
-             "y fuera del contenedor) porque los tags FLAC se leen por la ruta que reporta la propia "
-             "API de qBittorrent (bind mount — requiere recrear el contenedor)"},
+     "help": "Ruta host donde qBittorrent guarda las descargas, montada en /mnt/music/qbittorrent "
+             "dentro de este contenedor (bind mount — requiere recrear el contenedor)"},
     {"name": "MB_EMAIL", "secret": False,
      "help": "Email de contacto para la API de MusicBrainz (lo piden en el User-Agent)"},
 ]

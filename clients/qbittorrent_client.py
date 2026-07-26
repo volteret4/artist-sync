@@ -21,10 +21,16 @@ def _session(host, port, user, password):
     return s
 
 
-def list_content_paths(host, port, user, password, category=""):
-    """Devuelve la lista de rutas (carpeta o archivo) de cada torrent, ya
-    resueltas en el filesystem local (la app corre en el mismo host que
-    qBittorrent, asi que no hace falta remapear rutas)."""
+def list_content_paths(host, port, user, password, category="", remote_path="", local_path=""):
+    """Devuelve la lista de rutas (carpeta o archivo) de cada torrent.
+
+    Si qBittorrent corre en su propio contenedor, las rutas que reporta su
+    API (content_path/save_path) son las que VE ESE contenedor (p.ej.
+    "/downloads/Album X"), no necesariamente las que ve el filesystem donde
+    corre esta app. `remote_path`/`local_path` reescriben ese prefijo por la
+    ruta real donde artist-sync tiene montada la misma carpeta (ver
+    config.QB_REMOTE_PATH / QB_LOCAL_PATH). Si `remote_path` esta vacio, no
+    se reescribe nada (asume mismo filesystem, comportamiento original)."""
     s = _session(host, port, user, password)
     base = _base_url(host, port)
     params = {"category": category} if category else {}
@@ -37,5 +43,7 @@ def list_content_paths(host, port, user, password, category=""):
         content_path = t.get("content_path")
         if not content_path:
             content_path = os.path.join(t.get("save_path", ""), t.get("name", ""))
+        if remote_path and content_path.startswith(remote_path):
+            content_path = local_path + content_path[len(remote_path):]
         paths.append(content_path)
     return paths

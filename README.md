@@ -43,11 +43,14 @@ QB_PORT=8080
 QB_USER=admin
 QB_PASS=...
 QB_CATEGORY=             # opcional, vacío = todos los torrents
-# No hay QB_MUSIC_PATH aquí: los tags FLAC se leen por la ruta que reporta la
-# propia API de qBittorrent. En Docker (tumtumpa) eso se resuelve montando
-# ARTIST_SYNC_QB_MUSIC_PATH 1:1 (mismo path dentro y fuera del contenedor) —
-# ver docker-compose.yml. En local basta con correr esta app en el mismo
-# host que qBittorrent.
+# Si qBittorrent corre directamente en este mismo host/filesystem, deja esto
+# vacío: los tags FLAC se leen tal cual por la ruta que reporta su API.
+# Si qBittorrent corre en SU PROPIO contenedor, su API reporta rutas de SU
+# contenedor (ej. "/downloads"), no de este — QB_REMOTE_PATH le dice a
+# flac_scan.py que reescriba ese prefijo por la ruta local (fija,
+# /mnt/music/qbittorrent en Docker; ver docker-compose.yml y
+# ARTIST_SYNC_QB_MUSIC_PATH para la ruta real del host).
+QB_REMOTE_PATH=          # ej. /downloads — vacío si qBittorrent no está en su propio contenedor
 
 # MusicBrainz (para resolver MBIDs de artistas nuevos al seguir en Muspy)
 MB_EMAIL=tu@email.com
