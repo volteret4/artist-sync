@@ -26,6 +26,9 @@ VARS_SPEC = [
     {"name": "AIRSONIC_URL", "secret": False, "help": "URL base de Airsonic"},
     {"name": "AIRSONIC_USER", "secret": False, "help": "Usuario Airsonic"},
     {"name": "AIRSONIC_PASSWORD", "secret": True, "help": "Contraseña Airsonic"},
+    {"name": "AIRSONIC_API_VERSION", "secret": False,
+     "help": "Versión de API Subsonic a declarar (ej. 1.15.0) — súbela solo si tu Airsonic la soporta; "
+             "una versión mas nueva que la suya da 'Incompatible Airsonic REST protocol version'"},
     {"name": "LASTFM_API_KEY", "secret": True, "help": "API key de Last.fm"},
     {"name": "LASTFM_USERNAME", "secret": False, "help": "Usuario de Last.fm a comparar"},
     {"name": "LASTFM_MIN_PLAYCOUNT", "secret": False,

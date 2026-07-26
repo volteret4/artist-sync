@@ -9,15 +9,15 @@ class AirsonicError(Exception):
     pass
 
 
-def _params(user, password, **extra):
+def _params(user, password, version, **extra):
     salt = secrets.token_hex(8)
     token = hashlib.md5((password + salt).encode()).hexdigest()
-    return {"u": user, "t": token, "s": salt, "v": "1.16.1", "c": "artist-sync", "f": "json", **extra}
+    return {"u": user, "t": token, "s": salt, "v": version, "c": "artist-sync", "f": "json", **extra}
 
 
-def _call(base_url, user, password, endpoint, **kwargs):
+def _call(base_url, user, password, version, endpoint, **kwargs):
     url = f"{base_url}/rest/{endpoint}.view"
-    resp = requests.get(url, params=_params(user, password, **kwargs), timeout=15)
+    resp = requests.get(url, params=_params(user, password, version, **kwargs), timeout=15)
     resp.raise_for_status()
     data = resp.json().get("subsonic-response", {})
     if data.get("status") != "ok":
@@ -26,9 +26,9 @@ def _call(base_url, user, password, endpoint, **kwargs):
     return data
 
 
-def list_artists(base_url, user, password):
+def list_artists(base_url, user, password, version="1.15.0"):
     """Devuelve [{name, id, albumCount}, ...] recorriendo getArtists.view."""
-    data = _call(base_url, user, password, "getArtists")
+    data = _call(base_url, user, password, version, "getArtists")
     indexes = data.get("artists", {}).get("index", [])
     artists = []
     for index in indexes:

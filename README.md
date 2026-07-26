@@ -24,6 +24,8 @@ MUSPY_PASSWORD=...
 AIRSONIC_URL=http://localhost:4040
 AIRSONIC_USER=admin
 AIRSONIC_PASSWORD=...
+AIRSONIC_API_VERSION=1.15.0   # baja el numero si tu Airsonic es viejo y da
+                               # "Incompatible Airsonic REST protocol version"
 
 # Last.fm
 LASTFM_API_KEY=...
@@ -31,7 +33,12 @@ LASTFM_USERNAME=...
 LASTFM_MIN_PLAYCOUNT=5   # umbral al escanear; el filtro fino se ajusta en la web
 
 # qBittorrent WebUI
-QB_HOST=localhost
+# "localhost" solo vale si esta app corre FUERA de Docker en el mismo host
+# que qBittorrent. Si corre dentro de un contenedor (tumtumpa) y qBittorrent
+# no esta en el mismo docker-compose, "localhost" apunta al propio
+# contenedor -> usa host.docker.internal (el servicio ya declara
+# extra_hosts: host-gateway) o la IP LAN del host.
+QB_HOST=host.docker.internal
 QB_PORT=8080
 QB_USER=admin
 QB_PASS=...

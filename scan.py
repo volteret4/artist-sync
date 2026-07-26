@@ -14,7 +14,7 @@ import sys
 from clients import airsonic_client, flac_scan, lastfm_client, muspy_client, qbittorrent_client
 from clients.normalize import normalize
 from config import (
-    AIRSONIC_PASSWORD, AIRSONIC_URL, AIRSONIC_USER,
+    AIRSONIC_API_VERSION, AIRSONIC_PASSWORD, AIRSONIC_URL, AIRSONIC_USER,
     DB_PATH,
     LASTFM_API_KEY, LASTFM_MIN_PLAYCOUNT, LASTFM_USERNAME,
     MUSPY_PASSWORD, MUSPY_USERNAME,
@@ -94,7 +94,7 @@ def sync_airsonic(conn):
     if not AIRSONIC_PASSWORD:
         print("  [airsonic] sin credenciales, omitido")
         return
-    artists = airsonic_client.list_artists(AIRSONIC_URL, AIRSONIC_USER, AIRSONIC_PASSWORD)
+    artists = airsonic_client.list_artists(AIRSONIC_URL, AIRSONIC_USER, AIRSONIC_PASSWORD, AIRSONIC_API_VERSION)
     rows = [{"name": a["name"], "count": a.get("albumCount")} for a in artists]
     replace_source(conn, "airsonic", rows)
 

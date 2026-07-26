@@ -16,10 +16,14 @@ FLASK_PORT = int(os.environ.get("FLASK_PORT", 5000))
 MUSPY_USERNAME = os.environ.get("MUSPY_USERNAME", "")
 MUSPY_PASSWORD = os.environ.get("MUSPY_PASSWORD", "")
 
-# Airsonic / Subsonic API
-AIRSONIC_URL      = os.environ.get("AIRSONIC_URL", "http://localhost:4040")
-AIRSONIC_USER     = os.environ.get("AIRSONIC_USER", "admin")
-AIRSONIC_PASSWORD = os.environ.get("AIRSONIC_PASSWORD", "")
+# Airsonic / Subsonic API — mismo nombre AIRSONIC_API_VERSION que
+# dieta_sonora_stats, para reutilizar el valor via up.sh (algunos Airsonic
+# rechazan versiones de protocolo mas nuevas que la suya con "Incompatible
+# Airsonic REST protocol version").
+AIRSONIC_URL          = os.environ.get("AIRSONIC_URL", "http://localhost:4040")
+AIRSONIC_USER         = os.environ.get("AIRSONIC_USER", "admin")
+AIRSONIC_PASSWORD     = os.environ.get("AIRSONIC_PASSWORD", "")
+AIRSONIC_API_VERSION  = os.environ.get("AIRSONIC_API_VERSION", "1.15.0")
 
 # Last.fm
 LASTFM_API_KEY  = os.environ.get("LASTFM_API_KEY", "")
