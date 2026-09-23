@@ -61,6 +61,18 @@ VARS_SPEC = [
 ]
 _HAS_SECRETS = any(v.get("secret") for v in VARS_SPEC)
 
+# ── Botón "actualizar" (panel ⚙) ─────────────────────────────────────────────
+# Mismo comando que ya lanza Ofelia vía docker exec (ofelia.job-exec.
+# artist-sync-scan en docker-compose.yml) y que ya usa /api/sync más abajo
+# -- duplicado a propósito, el contenedor no puede leer las labels de
+# docker-compose.yml en runtime. Entra en el tier "actualizar todos" de
+# index/app.py, después de lastfm-scrobbles (lee lastfm_data si existe).
+JOBS = [
+    {"id": "artist-sync-scan", "label": "Sincronizar (Muspy/Airsonic/qBittorrent/Last.fm)",
+     "cmd": ["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "scan.py")],
+     "timeout": 900},
+]
+
 
 def _settings_path(spec):
     return SETTINGS_ROOT_ENV_PATH if spec.get("location") == "root" else SETTINGS_ENV_PATH
@@ -95,7 +107,8 @@ def api_settings():
         {"name": v["name"], "value": _current_value(v), "secret": v["secret"], "help": v.get("help", "")}
         for v in VARS_SPEC
     ]
-    return jsonify({"requires_password": requires, "authorized": True, "vars": vars_out})
+    jobs_out = [{"id": j["id"], "label": j["label"]} for j in JOBS]
+    return jsonify({"requires_password": requires, "authorized": True, "vars": vars_out, "jobs": jobs_out})
 
 
 @app.route("/api/settings/save", methods=["POST"])
@@ -123,6 +136,23 @@ def api_settings_save():
     else:
         message = "Guardado. Ya tiene efecto en la próxima sincronización (botón \"Sincronizar\"), sin tocar el contenedor."
     return jsonify({"ok": True, "message": message})
+
+
+@app.route("/api/jobs/run", methods=["POST"])
+def api_jobs_run():
+    # Sin contraseña: no toca secretos, solo relanza a mano el mismo sync
+    # que ya corre solo a diario.
+    job_id = (request.get_json(silent=True) or {}).get("job")
+    job = next((j for j in JOBS if j["id"] == job_id), None)
+    if not job:
+        return jsonify({"error": "Job desconocido"}), 404
+    try:
+        res = subprocess.run(job["cmd"], capture_output=True, text=True, timeout=job["timeout"])
+        if res.returncode != 0:
+            return jsonify({"error": res.stderr[-2000:] or "Error ejecutando el job"}), 500
+        return jsonify({"ok": True, "message": f"{job['label']} completado"})
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": f"Tardó más de {job['timeout']}s"}), 500
 
 
 # ---------------------------------------------------------------------------
