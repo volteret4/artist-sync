@@ -4,6 +4,7 @@ Flask app — comparador de artistas entre Muspy, Airsonic, qBittorrent y Last.f
 Muspy es la fuente "canonica" a seguir/dejar de seguir; el resto son solo lectura.
 """
 import os
+import signal
 import sqlite3
 import subprocess
 
@@ -138,6 +139,27 @@ def api_settings_save():
     return jsonify({"ok": True, "message": message})
 
 
+def _run_job_cmd(cmd, timeout):
+    """subprocess.run(timeout=...) solo mata al hijo directo -- si cmd es
+    p.ej. un script que a su vez lanza otros procesos, esos quedan
+    huérfanos y siguen corriendo indefinidamente tras el timeout
+    (confirmado en producción con dieta-sonora-stats: un timeout dejó un
+    proceso corriendo solo, y una segunda llamada chocó con la primera
+    sobre la misma SQLite). start_new_session=True + os.killpg mata el
+    grupo entero al hacer timeout, no solo el proceso directo."""
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, start_new_session=True,
+    )
+    try:
+        stdout, _ = proc.communicate(timeout=timeout)
+        return proc.returncode, stdout
+    except subprocess.TimeoutExpired:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        proc.wait()
+        raise
+
+
 @app.route("/api/jobs/run", methods=["POST"])
 def api_jobs_run():
     # Sin contraseña: no toca secretos, solo relanza a mano el mismo sync
@@ -147,12 +169,12 @@ def api_jobs_run():
     if not job:
         return jsonify({"error": "Job desconocido"}), 404
     try:
-        res = subprocess.run(job["cmd"], capture_output=True, text=True, timeout=job["timeout"])
-        if res.returncode != 0:
-            return jsonify({"error": res.stderr[-2000:] or "Error ejecutando el job"}), 500
+        returncode, output = _run_job_cmd(job["cmd"], job["timeout"])
+        if returncode != 0:
+            return jsonify({"error": (output or "")[-2000:] or "Error ejecutando el job"}), 500
         return jsonify({"ok": True, "message": f"{job['label']} completado"})
     except subprocess.TimeoutExpired:
-        return jsonify({"error": f"Tardó más de {job['timeout']}s"}), 500
+        return jsonify({"error": f"Tardó más de {job['timeout']}s (proceso terminado)"}), 500
 
 
 # ---------------------------------------------------------------------------
@@ -192,12 +214,12 @@ def api_sync():
     if only:
         cmd += ["--only", only]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+        returncode, output = _run_job_cmd(cmd, 900)
     except subprocess.TimeoutExpired:
         return jsonify({"error": "La sincronizacion tardo demasiado (timeout)"}), 500
     return jsonify({
-        "success": res.returncode == 0,
-        "log": (res.stdout + "\n" + res.stderr)[-4000:],
+        "success": returncode == 0,
+        "log": (output or "")[-4000:],
     })
 
 
