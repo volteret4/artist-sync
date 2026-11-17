@@ -1,0 +1,41 @@
+# Instalación por separado. Dentro de REPEAT-ONE se usa el docker-compose.yml de REPEAT-ONE.
+services:
+  artist-sync:
+    build: .
+    restart: unless-stopped
+    user: "${UID_GID:-1000:1000}"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - HOME=/tmp
+      - PYTHONDONTWRITEBYTECODE=1
+      - FLASK_HOST=0.0.0.0
+      - FLASK_PORT=5000
+    volumes:
+      - .:/app
+      - ${QB_MUSICA:-./datos/qbittorrent}:/mnt/music/qbittorrent:ro
+      - ${LASTFM_DIR:-./datos/lastfm}:/data:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${PUERTO:-5022}:5000"
+    labels:
+      ofelia.enabled: "true"
+      repeat-one.ofelia: "artist-sync"
+      ofelia.job-exec.artist-sync-scan.schedule: "0 15 0 * * *"
+      ofelia.job-exec.artist-sync-scan.command: "nice -n 19 ionice -c 3 python3 scan.py"
+
+  # Ofelia lanza los trabajos programados de las etiquetas ofelia.job-exec.* de arriba
+  # (los mismos horarios que en REPEAT-ONE). Solo ve los contenedores de este repo.
+  # Si no quieres actualizaciones automáticas: docker compose stop ofelia
+  ofelia:
+    image: mcuadros/ofelia:latest
+    restart: unless-stopped
+    command: daemon --docker --docker-filter=label=repeat-one.ofelia=artist-sync
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - artist-sync
